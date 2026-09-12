@@ -74,13 +74,17 @@ trader-companion/
 │   │   └── index.ts      # Singleton de connexion
 │   ├── engine/
 │   │   ├── recommender.ts # Moteur de recommandation heuristique
-│   │   └── portfolio.ts   # Calcul PnL, valeur totale
+│   │   ├── portfolio.ts   # Calcul PnL, valeur totale
+│   │   └── indicators.ts  # RSI, EMA, Bollinger Bands, volume ratio
 │   ├── risk/
 │   │   └── index.ts      # Garde-fous avant toute exécution
 │   ├── cli/
-│   │   └── index.ts      # CLI Commander (status/analyze/report)
+│   │   └── index.ts      # CLI Commander (status/analyze/report/indicators)
+│   ├── scheduler/
+│   │   └── index.ts      # Collecte automatique prix (cron)
 │   └── utils/
-│       └── logger.ts     # Winston logs console + fichier
+│       ├── logger.ts     # Winston logs console + fichier
+│       └── rate-limiter.ts # Rate limiting avec backoff exponentiel
 │
 ├── scripts/
 │   ├── db-init.ts        # Peupler les assets par défaut
@@ -260,6 +264,8 @@ Pour que Hermes soit le plus efficace possible, lui passer en contexte :
 | `npm run build` | Compiler TypeScript → dist/ |
 | `npm test` | Lancer tous les tests Jest |
 | `npm run test:unit` | Tests unitaires uniquement |
+| `npm run scheduler` | Collecte automatique prix (cron 5min) |
+| `npm run indicators` | Indicateurs techniques (RSI, EMA, BB, volume) |
 
 ---
 
@@ -315,6 +321,38 @@ Vérifié **avant toute exécution réelle**, indépendamment du recommender :
 3. **Perte quotidienne** ≤ `MAX_DAILY_LOSS_USD`
 
 Si une des vérifications échoue → trade **bloqué**, même si Hermes valide.
+
+---
+
+### `src/scheduler/index.ts` — PriceScheduler
+
+Collecte automatique des prix via cron (par défaut toutes les 5 minutes) :
+- `start()` / `stop()` — Démarre/arrête le processus
+- `runOnce()` — Exécution manuelle unique
+- Collecte CoinGecko (prix, volumes, variations) + CMC Fear & Greed Index
+- Utilise le RateLimiter pour respecter les quotas API
+
+### `src/engine/indicators.ts` — TechnicalIndicators
+
+Indicateurs techniques calculés depuis l'historique SQLite :
+- **RSI (14)** — Relative Strength Index (Wilder's smoothing)
+- **EMA 20 / EMA 50** — Moyennes mobiles exponentielles + détection croisements
+- **Bollinger Bands (20, 2σ)** — Bandes sup/milieu/inf + largeur (%)
+- **Volume Ratio 7j** — Volume actuel / moyenne 7j
+
+Fonctions utiles :
+- `calculateForAsset(assetId)` — Tous les indicateurs pour un asset
+- `calculateAll()` — Tous les assets actifs
+- `interpretSignals()` — Interprétation : RSI (oversold/overbought), Trend (bullish/bearish), BB (squeeze/expansion), Volume (high/low)
+- `checkBBTouch()` — Détection toucher bande haute/basse
+
+### `src/utils/rate-limiter.ts` — RateLimiter
+
+Rate limiting intelligent par domaine (coingecko, coinmarketcap, jupiter) :
+- File d'attente avec backoff exponentiel (1s, 2s, 4s... max 30s)
+- Fenêtre glissante configurable (défaut 30 req/min)
+- Retry automatique (max 3) avec logs
+- Stats en temps réel : `getStats(domain)`
 
 ---
 

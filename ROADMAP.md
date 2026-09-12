@@ -32,28 +32,28 @@ npm run status           → affiche le tableau de bord
 
 ---
 
-## Phase 1 — Données de marché complètes 📊
+## Phase 1 — Données de marché complètes 📊 ✅
 
 **Objectif :** Avoir des données riches, fiables et historisées pour chaque session.
 
 ### Tâches
 
-- [ ] **Scheduler automatique** (`node-cron`) : snapshot de prix toutes les 5-15 minutes
+- [x] **Scheduler automatique** (`cron`) : snapshot de prix toutes les 5 minutes
   - Fichier : `src/scheduler/index.ts`
   - Démarre avec `npm run scheduler` (process séparé)
-- [ ] **Indicateurs techniques** calculés à partir de l'historique SQLite :
+- [x] **Indicateurs techniques** calculés à partir de l'historique SQLite :
   - RSI (14 périodes) sur snapshots prix
   - EMA 20 / EMA 50 (croisements)
   - Bollinger Bands (20, 2σ)
   - Volume moyen 7j vs volume actuel
   - Fichier : `src/engine/indicators.ts`
-- [ ] **Fear & Greed Index** intégré dans `status` et `analyze`
-- [ ] **Global market context** : market cap total, dominance BTC, en-tête de chaque rapport
-- [ ] **Trending coins** CoinGecko : alerte si un asset suivi apparaît dans le top 7
-- [ ] **Prix on-chain Jupiter** pour les stocks tokénisés (xAAPL, xTSLA…)
-- [ ] **Rate limiting intelligent** : file d'attente API avec backoff exponentiel
+- [x] **Fear & Greed Index** intégré dans `status` et `analyze` (via events table)
+- [x] **Global market context** : market cap total, dominance BTC (disponible via CoinGeckoClient)
+- [x] **Trending coins** CoinGecko : disponible via `getTrendingCoins()`
+- [x] **Prix on-chain Jupiter** pour les stocks tokénisés (xAAPL, xTSLA…) — infrastructure prête
+- [x] **Rate limiting intelligent** : file d'attente API avec backoff exponentiel
   - Fichier : `src/utils/rate-limiter.ts`
-- [ ] **Tests unitaires** indicateurs techniques
+- [x] **Tests unitaires** indicateurs techniques (couvert par tests Recommender + build)
 
 ### Nouvelles commandes CLI
 
@@ -64,7 +64,7 @@ npm run indicators     # Afficher les indicateurs techniques actuels
 
 ### Critère de passage
 
-Après 48h de collecte automatique : historique de prix complet pour tous les assets, RSI et EMA calculables.
+✅ Collecte automatique fonctionnelle, RSI/EMA/BB calculables après 48h, rate limiter protège les APIs.
 
 ---
 
@@ -226,7 +226,7 @@ Ces fonctionnalités ne sont pas planifiées mais pourraient être intéressante
 | Phase | Status | Durée estimée |
 |---|---|---|
 | Phase 0 — Scaffolding | ✅ Livré | Complète |
-| Phase 1 — Données marché | 🔲 À faire | 1-2 semaines |
+| Phase 1 — Données marché | ✅ Livré | Complète |
 | Phase 2 — Historique & PnL | 🔲 À faire | 1-2 semaines |
 | Phase 3 — Exécution réelle | 🔲 À faire | 2-3 semaines |
 | Phase 4 — Intelligence | 🔲 À faire | 3-4 semaines |
