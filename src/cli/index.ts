@@ -19,13 +19,13 @@ import { executeProgram } from './commands/execute';
 const program = new Command();
 program.name('trader').description('Trader Companion — CLI for Hermes agent').version('0.1.0');
 
-// Intégrer le sous-programme execute dans le CLI principal
-program.addCommand(executeProgram);
 
 program
   .name('trader')
-  .description('Trader Companion — CLI for Hermes agent')
-  .version('0.1.0');
+  .description('Trader Companion — CLI for Hermes agent');
+
+// Intégrer le sous-programme execute dans le CLI principal
+program.addCommand(executeProgram);
 
 // ── status ────────────────────────────────────────────────────────────────────
 program
