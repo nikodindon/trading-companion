@@ -12,6 +12,8 @@
     "report": "ts-node src/cli/index.ts report",
     "scheduler": "ts-node src/scheduler/index.ts",
     "indicators": "ts-node src/cli/index.ts indicators",
+    "signals": "ts-node src/cli/index.ts signals",
+    "calibrate": "ts-node src/cli/index.ts calibrate",
     "daily-report": "ts-node src/cli/index.ts daily-report",
     "export": "ts-node src/cli/index.ts export",
     "backtest": "ts-node src/cli/index.ts backtest",

@@ -266,6 +266,8 @@ Pour que Hermes soit le plus efficace possible, lui passer en contexte :
 | `npm run test:unit` | Tests unitaires uniquement |
 | `npm run scheduler` | Collecte automatique prix (cron 5min) |
 | `npm run indicators` | Indicateurs techniques (RSI, EMA, BB, volume) |
+| `npm run signals` | Analyse combinée (confluence + corrélation BTC + saisonnalité) |
+| `npm run calibrate` | Calibration des poids de signaux sur résultats passés |
 | `npm run daily-report` | Rapport quotidien Markdown |
 | `npm run export` | Export CSV historique trades |
 | `npm run backtest` | Backtest sur données passées |
@@ -315,6 +317,26 @@ Moteur heuristique Phase 1. Paramètres clés :
 | PnL position < -10% | → SELL (stop loss) |
 
 Score ≥ 3 → BUY | Score ≥ 1 → WATCH | Score < 1 → WATCH/HOLD
+
+### `src/engine/signals.ts` — SignalEngine
+- `calculateConfluence()` : matrice de confluence (score 0-5) combinant RSI, EMA, BB, volume
+- `checkBtcCorrelation()` : corrélation BTC vs alts (bullish/bearish)
+- `checkSeasonality()` : patterns hebdomadaires basés sur historique SQLite
+- `generateCombinedAnalysis()` : analyse complète avec recommandation, score de confiance, conseils
+
+### `src/engine/llm-advisor.ts` — LLMAdvisor (optionnel)
+- Intégration LLM externe (Ollama via `provider=ollama`)
+- Analyse en langage naturel du contexte marché + portfolio + recommandations + alertes
+- Méthode `generateAnalysis()` : fournit un résumé structuré prêt pour un LLM
+- Méthode `queryLLM()` : requête vers endpoint Ollama (ou autre provider)
+
+### `src/engine/calibrator.ts` — Calibrator
+- Ajuste les poids des signaux heuristiques selon taux de réussite passé (30j)
+- `calibrateSignalWeights()` : retourne `signalWeights` + `accuracyRate`
+
+### `src/engine/watchlist-dynamic.ts` — DynamicWatchlist
+- `analyzeTrending()` : détecte coins trending CoinGecko non encore suivis
+- `proposeAdditions()` : propose ajout automatique (min score 0.8)
 
 ### `src/risk/index.ts` — RiskManager
 

@@ -108,7 +108,7 @@ npm run dashboard      # Génère data/exports/dashboard.html
 
 ---
 
-## Phase 3 — Exécution réelle supervisée 🔴
+## Phase 3 — Exécution réelle supervisée 🔴 ✅
 
 **Objectif :** Activer `DRY_RUN=false` avec des garde-fous renforcés et une supervision explicite.
 
@@ -122,17 +122,13 @@ npm run dashboard      # Génère data/exports/dashboard.html
 
 ### Tâches
 
-- [ ] **Confirmation obligatoire** avant tout trade réel
-  - Prompt CLI interactif avec résumé du trade et demande de confirmation
-  - Option `--yes` pour Hermes (mais loggée explicitement)
-  - Fichier : `src/cli/commands/execute.ts`
-- [ ] **Transaction logging complet** : signature Solana, explorer link, timestamp
-- [ ] **Rollback automatique** : si une transaction échoue → log + alerte, jamais de retry automatique
-- [ ] **Notifications** : fichier webhook optionnel (Discord, Telegram) pour chaque trade réel
-  - Fichier : `src/utils/notifier.ts`
-- [ ] **Rate limiting trades** : délai minimum entre deux trades (ex. 30 secondes)
-- [ ] **Vérification solde USDC** avant achat (éviter SOL drain par frais)
-- [ ] **Gestion des erreurs de slippage** : si slippage réel > seuil → annulation
+- [x] **Confirmation obligatoire** avant tout trade réel (commande `execute` avec prompt interactif)
+- [x] **Transaction logging complet** (signature, timestamp, explorer URL via notifier)
+- [x] **Rollback automatique** : si erreur → `notifyAlert('critical', ...)`, jamais retry auto
+- [x] **Notifications webhook** (Discord, Telegram, custom) via `notifier`
+- [x] **Rate limiting trades** (délai minimum 30 secondes entre trades réels)
+- [x] **Vérification solde USDC** avant achat (`execute` vérifie token balances)
+- [x] **Gestion des erreurs de slippage** : `priceImpactReal > defaultSlippageBps/100` → throw erreur
 - [ ] **Tests d'intégration** avec devnet Solana avant mainnet
 
 ### Nouvelles commandes CLI
@@ -149,26 +145,26 @@ npm run execute -- --status                    # Vérifier le statut des transac
 
 ---
 
-## Phase 4 — Intelligence de décision enrichie 🧠
+## Phase 4 — Intelligence de décision enrichie 🧠 🔲 (en cours)
 
 **Objectif :** Passer d'une heuristique simple à un moteur de décision plus robuste.
 
 ### Tâches
 
-- [ ] **Signaux techniques combinés** (Phase 1 + RSI + EMA + Bollinger)
-  - Matrice de confluence : un BUY nécessite ≥ 3 indicateurs alignés
-  - Fichier : `src/engine/signals.ts`
+- [x] **Signaux techniques combinés** (Phase 1 + RSI + EMA + Bollinger)
+  - Matrice de confluence + corrélation BTC + saisonnalité
+  - Fichier : `src/engine/signals.ts` ✅
 - [ ] **Corrélation entre assets** : détecter quand BTC tire tout le marché
   - Éviter d'acheter des alts quand BTC est en correction
 - [ ] **Seasonality** : patterns hebdomadaires/mensuels basés sur l'historique
-- [ ] **Intégration LLM externe** (optionnel) :
-  - Envoyer le contexte marché + positions à un LLM (local via Ollama ou API)
-  - Récupérer une analyse en langage naturel enrichissant la CLI
-  - Fichier : `src/engine/llm-advisor.ts`
-- [ ] **Scoring de confiance affiné** : calibré sur les résultats des recommandations passées
-  - Si rec BUY → trade → +PnL : augmenter le poids de ce signal
-  - Fichier : `src/engine/calibrator.ts`
-- [ ] **Watchlist dynamique** : ajouter automatiquement des assets si trending + volume fort
+- [x] **Intégration LLM externe** (optionnel) :
+  - `LLMAdvisor.generateAnalysis()` + `queryLLM()` (Ollama / API)
+  - Fichier : `src/engine/llm-advisor.ts` ✅
+- [x] **Scoring de confiance affiné (Calibrator)** : calibré sur résultats 30j
+  - `Calibrator.calibrateSignalWeights()` + résultats `accuracyRate`
+  - Fichier : `src/engine/calibrator.ts` ✅
+- [x] **Watchlist dynamique** : `DynamicWatchlist` (analyse trending CoinGecko)
+  - Fichier : `src/engine/watchlist-dynamic.ts` ✅
 - [ ] **Position sizing dynamique** : ajuster la taille selon la confiance et la volatilité
 
 ### Critère de passage

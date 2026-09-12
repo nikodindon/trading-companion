@@ -13,6 +13,7 @@ import { alertEngine } from '../engine/alerts';
 import { notifier } from '../utils/notifier';
 import { config } from '../config';
 import { logger } from '../utils/logger';
+import { signalEngine } from '../engine/signals';
 import { executeProgram } from './commands/execute';
 
 const program = new Command();
@@ -850,6 +851,56 @@ program
 
     } catch (err) {
       logger.error('Dashboard error', err);
+      process.exit(1);
+    } finally {
+      closeDb();
+    }
+  });
+
+// ── signals ─────────────────────────────────────────────────────────────────────
+program
+  .command('signals')
+  .description('Analyse combinée (confluence technique + corrélation BTC + saisonnalité)')
+  .option('--asset <asset>', 'Asset à analyser (ex: solana)')
+  .action(async (opts: { asset?: string }) => {
+    try {
+      console.log(chalk.cyan('\n═══════════════════════════════════════'));
+      console.log(chalk.cyan('  🧠 ANALYSE COMBINÉE (SIGNALS)'));
+      console.log(chalk.cyan('═══════════════════════════════════════\n'));
+
+      const db = getDb();
+      const assets = db.prepare(`SELECT id, symbol FROM assets WHERE is_active = 1 AND type = 'crypto'`).all() as Array<{ id: string; symbol: string }>;
+
+      const cg = new CoinGeckoClient();
+      const cgIds = assets.map(a => a.id).filter(id => !id.startsWith('xstock-'));
+      const marketData = await cg.getMarketData(cgIds);
+      const priceMap = new Map(marketData.map(d => [d.id, d.current_price]));
+
+      for (const asset of assets.slice(0, opts.asset ? 1 : assets.length)) {
+        if (opts.asset && asset.id !== opts.asset.toLowerCase()) continue;
+
+        const currentPrice = priceMap.get(asset.id) ?? 0;
+        const analysis = await signalEngine.generateCombinedAnalysis(asset.id, asset.symbol, currentPrice);
+
+        console.log(chalk.bold(`📊 ${asset.symbol.toUpperCase()} — Prix: $${currentPrice.toFixed(4)}`));
+        console.log('─'.repeat(60));
+        console.log(`  Score confluence : ${analysis.confluence.score}/5`);
+        console.log(`  Recommandation   : ${analysis.confluence.recommendation.toUpperCase()} (conf: ${(analysis.confluence.confidence * 100).toFixed(0)}%)`);
+        console.log(`  Trend BTC        : ${analysis.correlation.btcTrend.toUpperCase()} (${analysis.correlation.correlationAdvice})`);
+        console.log(`  Saisonnalité     : ${analysis.seasonality.pattern} — ${analysis.seasonality.message}`);
+        console.log('');
+        console.log(`  Raisons : ${analysis.finalAdvice}`);
+        console.log('');
+        console.log('  Indicateurs détaillés :');
+        console.log(`    RSI(14)  : ${analysis.confluence.indicators.rsi14}`);
+        console.log(`    Trend EMA: ${analysis.confluence.indicators.trend}`);
+        console.log(`    BB Touch : ${analysis.confluence.indicators.bbTouch}`);
+        console.log(`    BB Signal: ${analysis.confluence.indicators.bbSignal}`);
+        console.log(`    Volume   : ${analysis.confluence.indicators.volume}`);
+        console.log('');
+      }
+    } catch (err) {
+      logger.error('Signals command error', err);
       process.exit(1);
     } finally {
       closeDb();
