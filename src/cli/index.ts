@@ -888,8 +888,10 @@ program
         console.log(`  Recommandation   : ${analysis.confluence.recommendation.toUpperCase()} (conf: ${(analysis.confluence.confidence * 100).toFixed(0)}%)`);
         console.log(`  Trend BTC        : ${analysis.correlation.btcTrend.toUpperCase()} (${analysis.correlation.correlationAdvice})`);
         console.log(`  Saisonnalité     : ${analysis.seasonality.pattern} — ${analysis.seasonality.message}`);
+        console.log(`  Dynamic sizing  : taille suggérée $${(analysis.dynamicSizeUsd ?? 0).toFixed(0)} (conf ${(analysis.confluence.confidence * 100).toFixed(0)}%)`);
         console.log('');
         console.log(`  Raisons : ${analysis.finalAdvice}`);
+        console.log(`  Dynamic sizing : taille suggérée $${(analysis.dynamicSizeUsd ?? 0).toFixed(0)} (conf ${(analysis.confluence.confidence * 100).toFixed(0)}% × vol)`);
         console.log('');
         console.log('  Indicateurs détaillés :');
         console.log(`    RSI(14)  : ${analysis.confluence.indicators.rsi14}`);

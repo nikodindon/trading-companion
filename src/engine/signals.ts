@@ -240,11 +240,12 @@ export class SignalEngine {
   /**
    * Génère une analyse combinée (confluence + corrélation + saisonnalité).
    */
-  async generateCombinedAnalysis(assetId: string, symbol: string, currentPrice: number): Promise<{
+  async generateCombinedAnalysis(assetId: string, symbol: string, currentPrice: number, positionData?: { quantity: number; avgBuyPrice: number; totalInvested: number }): Promise<{
     confluence: SignalConfluence;
     correlation: CorrelationResult;
     seasonality: { pattern: string; message: string };
     finalAdvice: string;
+    dynamicSizeUsd?: number;
   }> {
     const [confluence, correlation, seasonality] = await Promise.all([
       this.calculateConfluence(assetId, symbol, currentPrice),
@@ -267,7 +268,11 @@ export class SignalEngine {
       finalAdvice = confluence.reasons.join(' | ');
     }
 
-    return { confluence, correlation, seasonality, finalAdvice };
+    const bbWidthApprox = confluence.indicators.bbSignal === "squeeze" ? 5 : (confluence.indicators.bbSignal === "expansion" ? 20 : 12);
+    const volFactor = Math.max(0.5, Math.min(1.5, 15 / Math.max(bbWidthApprox, 1)));
+    const sizeMult = confluence.confidence * volFactor;
+    const dynamicSize = Math.round(sizeMult * 50);
+    return { confluence, correlation, seasonality, finalAdvice: finalAdvice + " Taille suggérée dynamique : $" + dynamicSize.toFixed(0), dynamicSizeUsd: dynamicSize };
   }
 }
 

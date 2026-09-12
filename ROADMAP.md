@@ -151,7 +151,7 @@ npm run execute -- --status                    # Vérifier le statut des transac
 
 ### Tâches
 
-- [x] **Signaux techniques combinés** (Phase 1 + RSI + EMA + Bollinger)
+- [x] **Signaux techniques combinés** (confluence + corrélation + saisonnalité) ✅ (Phase 1 + RSI + EMA + Bollinger)
   - Matrice de confluence + corrélation BTC + saisonnalité
   - Fichier : `src/engine/signals.ts` ✅
 - [ ] **Corrélation entre assets** : détecter quand BTC tire tout le marché
