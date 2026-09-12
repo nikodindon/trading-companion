@@ -7,6 +7,7 @@ import { CoinGeckoClient } from '../market/coingecko';
 import { Recommender } from '../engine/recommender';
 import { getPortfolioSummary } from '../engine/portfolio';
 import { RiskManager } from '../risk';
+import { technicalIndicators, TechnicalIndicators } from '../engine/indicators';
 import { config } from '../config';
 import { logger } from '../utils/logger';
 
@@ -192,6 +193,58 @@ program
 
     console.log(JSON.stringify({ trades, recs, positions, generated_at: new Date().toISOString() }, null, 2));
     closeDb();
+  });
+
+// ── indicators ─────────────────────────────────────────────────────────────────
+program
+  .command('indicators')
+  .description('Indicateurs techniques (RSI, EMA, Bollinger Bands) pour tous les assets')
+  .action(async () => {
+    try {
+      console.log(chalk.cyan('\n═══════════════════════════════════════'));
+      console.log(chalk.cyan('  📈 INDICATEURS TECHNIQUES'));
+      console.log(chalk.cyan('═══════════════════════════════════════\n'));
+
+      const results = await technicalIndicators.calculateAll();
+
+      if (results.length === 0) {
+        console.log(chalk.gray('  Pas assez de données historiques (minimum 50 snapshots par asset).'));
+        console.log(chalk.gray('  Lancez le scheduler ou attendez plus de collecte.'));
+        return;
+      }
+
+      console.log(chalk.gray('  Asset      Prix      RSI    EMA20    EMA50    BB Width  Vol Ratio  Signaux'));
+      console.log('─'.repeat(95));
+
+      for (const ind of results) {
+        const signals = TechnicalIndicators.interpretSignals(ind);
+        const bbTouch = TechnicalIndicators.checkBBTouch(ind);
+
+        const rsiStr = ind.rsi14 !== null ? ind.rsi14.toFixed(1) : 'N/A';
+        const ema20Str = ind.ema20 !== null ? ind.ema20.toFixed(4) : 'N/A';
+        const ema50Str = ind.ema50 !== null ? ind.ema50.toFixed(4) : 'N/A';
+        const bbWidthStr = ind.bbWidth !== null ? ind.bbWidth.toFixed(1) + '%' : 'N/A';
+        const volStr = ind.volumeRatio7d !== null ? ind.volumeRatio7d.toFixed(2) + 'x' : 'N/A';
+
+        const signalParts: string[] = [];
+        if (signals.rsiSignal !== 'neutral') signalParts.push(`RSI:${signals.rsiSignal}`);
+        if (signals.trendSignal !== 'neutral') signalParts.push(`Trend:${signals.trendSignal}`);
+        if (signals.bbSignal !== 'normal') signalParts.push(`BB:${signals.bbSignal}`);
+        if (signals.volumeSignal !== 'normal') signalParts.push(`Vol:${signals.volumeSignal}`);
+        if (bbTouch !== 'none') signalParts.push(`BB-touch:${bbTouch}`);
+
+        const signalStr = signalParts.length > 0 ? signalParts.join(', ') : '—';
+
+        console.log(`  ${ind.assetId.padEnd(10)} $${ind.price.toFixed(4).padEnd(10)} ${rsiStr.padEnd(7)} ${ema20Str.padEnd(10)} ${ema50Str.padEnd(10)} ${bbWidthStr.padEnd(10)} ${volStr.padEnd(10)} ${signalStr}`);
+      }
+
+      console.log('');
+    } catch (err) {
+      logger.error('Indicators command error', err);
+      process.exit(1);
+    } finally {
+      closeDb();
+    }
   });
 
 program.parseAsync(process.argv).catch(console.error);
