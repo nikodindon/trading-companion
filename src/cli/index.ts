@@ -10,10 +10,16 @@ import { RiskManager } from '../risk';
 import { technicalIndicators, TechnicalIndicators } from '../engine/indicators';
 import { calculatePortfolioPnl } from '../engine/pnl';
 import { alertEngine } from '../engine/alerts';
+import { notifier } from '../utils/notifier';
 import { config } from '../config';
 import { logger } from '../utils/logger';
+import { executeProgram } from './commands/execute';
 
 const program = new Command();
+program.name('trader').description('Trader Companion — CLI for Hermes agent').version('0.1.0');
+
+// Intégrer le sous-programme execute dans le CLI principal
+program.addCommand(executeProgram);
 
 program
   .name('trader')
