@@ -293,6 +293,9 @@ Avec une clé Pro : pas de limite + endpoints supplémentaires.
 
 Requiert une clé API CMC (plan gratuit disponible).
 
+### `src/daemon/index.ts` — TradingDaemon
+- Processus autonome (`npm run daemon`) : collecte prix toutes les 60min, génère recommandations, applique stop-loss automatiques (SELL uniquement), rapporte PnL session, notifie alertes. Ne fait JAMAIS de BUY automatique. Nécessite `.env` `DRY_RUN=false` + wallet dédié.
+
 ### `src/dex/jupiter.ts` — JupiterClient
 
 - `getQuote(inputMint, outputMint, amount, slippage)` — Meilleur chemin de swap
