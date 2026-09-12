@@ -266,6 +266,10 @@ Pour que Hermes soit le plus efficace possible, lui passer en contexte :
 | `npm run test:unit` | Tests unitaires uniquement |
 | `npm run scheduler` | Collecte automatique prix (cron 5min) |
 | `npm run indicators` | Indicateurs techniques (RSI, EMA, BB, volume) |
+| `npm run daily-report` | Rapport quotidien Markdown |
+| `npm run export` | Export CSV historique trades |
+| `npm run backtest` | Backtest sur données passées |
+| `npm run dashboard` | Dashboard HTML interactif (Chart.js) |
 
 ---
 

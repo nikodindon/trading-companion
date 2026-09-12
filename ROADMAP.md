@@ -68,30 +68,30 @@ npm run indicators     # Afficher les indicateurs techniques actuels
 
 ---
 
-## Phase 2 — Historique, PnL & Rapports 📈
+## Phase 2 — Historique, PnL & Rapports 📈 ✅
 
 **Objectif :** Avoir une vision complète et historisée de toutes les performances.
 
 ### Tâches
 
-- [ ] **PnL réalisé vs non-réalisé** : calcul précis avec frais
+- [x] **PnL réalisé vs non-réalisé** : calcul précis avec frais
   - Méthode FIFO pour les positions partielles
   - Fichier : `src/engine/pnl.ts`
-- [ ] **Export de rapport quotidien** en Markdown lisible par Hermes
+- [x] **Export de rapport quotidien** en Markdown lisible par Hermes
   - Résumé de session, meilleures/pires positions, recommandations actées
-  - Fichier : `src/cli/commands/daily-report.ts`
-- [ ] **Export CSV** de l'historique de trades
-  - Fichier : `src/cli/commands/export.ts`
-- [ ] **Système d'alertes** sur événements notables :
+  - Fichier : `src/cli/commands/daily-report.ts` (intégré dans `src/cli/index.ts`)
+- [x] **Export CSV** de l'historique de trades
+  - Fichier : `src/cli/commands/export.ts` (intégré dans `src/cli/index.ts`)
+- [x] **Système d'alertes** sur événements notables :
   - Asset suivi en mouvement > ±10% en 1h
   - Position en profit de plus de 15%
   - Stop-loss approché (< 5% du seuil)
   - Fichier : `src/engine/alerts.ts`
-- [ ] **Vue calendrier** des sessions Hermes avec PnL par session
-- [ ] **Backtesting simplifié** : rejouer les recommandations passées sur données réelles
-  - Fichier : `src/engine/backtest.ts`
-- [ ] **Dashboard HTML statique** généré à la demande (graphiques recharts/chart.js)
-  - Fichier : `src/cli/commands/dashboard.ts`
+- [x] **Vue calendrier** des sessions Hermes avec PnL par session (dans daily-report)
+- [x] **Backtesting simplifié** : rejouer les recommandations passées sur données réelles
+  - Fichier : `src/cli/commands/backtest.ts` (intégré dans `src/cli/index.ts`)
+- [x] **Dashboard HTML statique** généré à la demande (graphiques Chart.js)
+  - Fichier : `src/cli/commands/dashboard.ts` (intégré dans `src/cli/index.ts`)
 
 ### Nouvelles commandes CLI
 
@@ -104,7 +104,7 @@ npm run dashboard      # Génère data/exports/dashboard.html
 
 ### Critère de passage
 
-Le rapport quotidien est lisible par Hermes sans ambiguïté. Le backtest peut rejouer 30 jours de données.
+✅ Rapport quotidien lisible par Hermes sans ambiguïté. Le backtest peut rejouer 30 jours de données. Dashboard HTML interactif généré.
 
 ---
 
@@ -227,7 +227,7 @@ Ces fonctionnalités ne sont pas planifiées mais pourraient être intéressante
 |---|---|---|
 | Phase 0 — Scaffolding | ✅ Livré | Complète |
 | Phase 1 — Données marché | ✅ Livré | Complète |
-| Phase 2 — Historique & PnL | 🔲 À faire | 1-2 semaines |
+| Phase 2 — Historique & PnL | ✅ Livré | Complète |
 | Phase 3 — Exécution réelle | 🔲 À faire | 2-3 semaines |
 | Phase 4 — Intelligence | 🔲 À faire | 3-4 semaines |
 | Phase 5 — Autonomie | 🔲 À faire | 2-3 semaines |
