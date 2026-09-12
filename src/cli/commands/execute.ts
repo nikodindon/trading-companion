@@ -87,10 +87,25 @@ executeProgram
       const action: 'buy' | 'sell' = opts.buy ? 'buy' : 'sell';
       const amountStr = opts.amount ?? '0';
       const amount = parseFloat(amountStr);
+      let executedSuccessfully = false;
 
       if (isNaN(amount) || amount <= 0) {
         console.log('❌ Montant invalide. Utilisez un nombre positif.');
         process.exit(1);
+      }
+
+      // Vérification solde USDC avant achat (pour éviter SOL drain par frais)
+      if (action === 'buy') {
+        const tokenBalances = await wallet.getTokenBalances();
+        const usdcAccount = tokenBalances.find(t => t.mint === 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v');
+        const usdcBalance = usdcAccount ? usdcAccount.amount : 0;
+        const minUsdcForFees = 5; // $5 minimum pour couvrir frais
+        if (usdcBalance < minUsdcForFees) {
+          console.log(`⛔ SOLDE USDC INSUFFISANT : $${usdcBalance.toFixed(4)} disponible (minimum $${minUsdcForFees} requis pour frais)`);
+          console.log('   Ajoutez du USDC au wallet dédié avant de procéder.');
+          process.exit(1);
+        }
+        console.log(`  💵 Solde USDC : $${usdcBalance.toFixed(4)} (OK pour frais)`);
       }
 
       // Vérification risk avant tout
@@ -188,10 +203,15 @@ executeProgram
 
       logger.info('Trade LIVE exécuté (Phase 3)', { action, asset: assetSymbol, amount, wallet: wallet.address });
       console.log('✅ Trade exécuté avec succès. Vérifiez le wallet et le log.');
+      executedSuccessfully = true;
 
     } catch (err) {
       logger.error('Execute command error', err);
       console.log('❌ Erreur lors de l\'exécution:', (err as Error).message);
+      // Rollback : notification d'échec, pas de retry
+      await notifier.notifyAlert('critical', 'Rollback : erreur dexecution (vérifiez wallet et logs). Aucune retry.');
+
+      console.log('⛔ Aucune retry automatique effectuée. Vérifiez le log et l\'état du wallet manuellement.');
       process.exit(1);
     }
   });

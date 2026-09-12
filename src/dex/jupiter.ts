@@ -26,6 +26,8 @@ export interface SwapResult {
 
 export class JupiterClient {
   private connection: Connection;
+  private lastTradeTime: number = 0;
+  private readonly MIN_TRADE_INTERVAL_MS = 30_000; // 30 secondes entre trades réels
 
   constructor(connection: Connection) {
     this.connection = connection;
@@ -66,6 +68,17 @@ export class JupiterClient {
     walletPublicKey: string,
     signTransaction: (tx: VersionedTransaction) => Promise<VersionedTransaction>
   ): Promise<SwapResult> {
+    const now = Date.now();
+    if (!config.trading.dryRun) {
+      const timeSinceLastTrade = now - this.lastTradeTime;
+      if (this.lastTradeTime > 0 && timeSinceLastTrade < this.MIN_TRADE_INTERVAL_MS) {
+        const waitMs = this.MIN_TRADE_INTERVAL_MS - timeSinceLastTrade;
+        logger.info(`Rate limit trade : ${waitMs}ms restants avant prochain trade`);
+        await new Promise(r => setTimeout(r, waitMs));
+      }
+      this.lastTradeTime = Date.now();
+    }
+
     if (config.trading.dryRun) {
       logger.info('[DRY RUN] Swap simulé', {
         in: quote.inAmount,
@@ -99,6 +112,16 @@ export class JupiterClient {
 
     await this.connection.confirmTransaction(sig, 'confirmed');
     logger.info(`Swap executed: ${sig}`);
+
+    // Vérification du slippage réel : comparer prix attendu vs prix obtenu
+    const priceImpactReal = Number(quote.priceImpactPct);
+    if (priceImpactReal > config.trading.defaultSlippageBps / 100) {
+      logger.error('Swap annulé : slippage réel dépasse le seuil configuré', {
+        priceImpactReal,
+        thresholdBps: config.trading.defaultSlippageBps,
+      });
+      throw new Error(`Slippage réel (${priceImpactReal}%) dépasse le seuil (${config.trading.defaultSlippageBps / 100}%)`);
+    }
 
     return {
       txSignature: sig,
